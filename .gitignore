@@ -1,4 +1,8 @@
-/node_modules
-/content.db
+/databases
+/exercises.json
 
+*.pyc
+
+/.env
+/.idea
 .DS_Store
