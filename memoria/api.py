@@ -94,11 +94,12 @@ def update_exercise(exercise_id):
         params.append(value)
 
     params.append(exercise_id)
+    params.append(exercise['updated_time'])
 
     connection = content.open_connection()
     cursor = connection.cursor()
     cursor.execute(
-        ''.join(['UPDATE exercises SET ', ', '.join(setters), ' WHERE id = ?']),
+        ''.join(['UPDATE exercises SET ', ', '.join(setters), ' WHERE id = ? AND updated_time < CAST(? AS INTEGER)']),
         params
     )
 
