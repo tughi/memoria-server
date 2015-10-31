@@ -1,5 +1,6 @@
 # coding=utf-8
 import json
+import hashlib
 
 import content
 from bottle import Bottle, response, request
@@ -7,36 +8,43 @@ from bottle import Bottle, response, request
 api = Bottle(autojson=False)
 
 
-class ApiException:
-    def __init__(self, code, message):
-        self.code = code
-        self.message = message
+def json_response(callback):
+    def wrapper(*args, **kwargs):
+        response.headers['Content-Type'] = 'application/json; charset=utf-8'
+
+        try:
+            result = callback(*args, **kwargs)
+        except Exception, e:
+            response.status = 500
+            result = {
+                'error': str(e)
+            }
+
+        return json.dumps(result, encoding='utf-8', ensure_ascii=False, indent=True)
+
+    return wrapper
 
 
-class ApiPlugin(object):
-    def apply(self, callback, route):
-        def decorator(*args, **kwargs):
-            response.headers['Content-Type'] = 'application/json; charset=utf-8'
+def cached_response(callback):
+    def wrapper(*args, **kwargs):
+        result = callback(*args, **kwargs)
 
-            try:
-                result = callback(*args, **kwargs)
-            except ApiException, e:
-                response.status = e.code
-                result = {
-                    'error': e.message
-                }
+        etag = '"%s"' % hashlib.md5(result.encode('utf-8')).hexdigest()
+        response.set_header('ETag', etag)
 
-            return json.dumps(result, encoding='utf-8', ensure_ascii=False, indent=True)
+        if request.get_header('If-None-Match') == etag:
+            response.status = 304
+            result = ''
 
-        return decorator
+        return result
 
+    return wrapper
 
-api.install(ApiPlugin())
 
 DEBUG = True
 
 
-@api.get('/exercises')
+@api.get('/exercises', apply=[cached_response, json_response])
 def get_exercises():
     columns = [
         'id',
@@ -59,7 +67,7 @@ def get_exercises():
     return result
 
 
-@api.post('/exercises')
+@api.post('/exercises', apply=[json_response])
 def add_exercise():
     exercise = request.json
 
@@ -83,7 +91,7 @@ def add_exercise():
     }
 
 
-@api.route('/exercises/<exercise_id:int>', method='PATCH')
+@api.route('/exercises/<exercise_id:int>', method='PATCH', apply=[json_response])
 def update_exercise(exercise_id):
     exercise = request.json
 
