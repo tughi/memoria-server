@@ -55,13 +55,16 @@ def get_exercises():
         'definition',
         'notes',
         'rating',
-        'practice_time'
+        'practice_time',
+        'disabled',
     ]
 
     result = []
 
     cursor = content.open_connection()
     for row in cursor.execute('SELECT %s FROM exercises' % ', '.join(columns)):
+        row = list(row)
+        row[-1] = row[-1] != 0
         result.append(dict(zip(columns, row)))
 
     return result

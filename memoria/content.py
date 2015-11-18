@@ -49,7 +49,8 @@ def __create_database(cursor):
             definition TEXT NOT NULL,
             notes TEXT,
             rating INTEGER NOT NULL,
-            practice_time INTEGER NOT NULL
+            practice_time INTEGER NOT NULL,
+            disabled INTEGER NOT NULL DEFAULT 0
         )
     ''')
 
