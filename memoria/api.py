@@ -94,7 +94,7 @@ def add_exercise():
     }
 
 
-@api.route('/exercises/<exercise_id:int>', method='PATCH', apply=[json_response])
+@api.put('/exercises/<exercise_id:int>', apply=[json_response])
 def update_exercise(exercise_id):
     exercise = request.json
 
